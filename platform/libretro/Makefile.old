@@ -6,17 +6,18 @@
 # INCLUDES is a list of directories containing header files
 #
 #---------------------------------------------------------------------------------
-TARGET		:=	FAKE08
+#todo: multi platform with extension
+TARGET		:=	fake08_libretro.dylib
 BUILD		:=	build
-SOURCES		:=	${SOURCES} ../SDL2Common/source source
-INCLUDES	:=	${INCLUDES}
+SOURCES   	:= ../../source ../../libs/z8lua ../../libs/utf8-util ../../libs/lodepng ../../libs/simpleini ../../libs/miniz ./
+INCLUDES  	:= ../../source ../../include ../../libs/z8lua ../../libs/utf8-util ../../libs/lodepng ../../libs/simpleini ../../libs/miniz ./
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 CC = $(CXX)
 
-CFLAGS	:=	-g -Wall -Wno-deprecated -ffunction-sections -std=c++17 \
+CFLAGS	:=	-fPIC -g -O2 -Wall -Wno-deprecated -ffunction-sections -std=c++17 \
 			$(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -DVER_STR=\"$(APP_VERSION)\"
@@ -24,9 +25,8 @@ CFLAGS	+=	$(INCLUDE) -DVER_STR=\"$(APP_VERSION)\"
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions 
 #-std=gnu++11 was used before... not sure of difference
 
-LIBS	:= -lSDL2
 
-LDFLAGS	:= $(LIBS)
+LDFLAGS	:= -dynamiclib $(LIBS)
 
 
 #---------------------------------------------------------------------------------
@@ -46,6 +46,10 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+
+
+CPPFILES := $(filter-out main.cpp,$(CPPFILES))
+#CPPFILES := $(filter-out hostCommonFunctions.cpp,$(CPPFILES))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -73,10 +77,10 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 
-.PHONY: $(BUILD) clean all
+.PHONY: $(BUILD) clean all echo
 
 #---------------------------------------------------------------------------------
-all: $(BUILD)
+
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
@@ -86,6 +90,12 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET)
+
+
+echo:
+	@echo echo ...
+	@echo $(CFILES) 
+	@echo $(CPPFILES)
 
 
 #---------------------------------------------------------------------------------
@@ -98,6 +108,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 all	:	$(OUTPUT)
+
 
 $(OUTPUT)		:	$(OFILES)
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
